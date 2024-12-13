@@ -43,7 +43,7 @@ data3 = data_prep(bfly_f, 'Thymelicus lineola')
 #   data_f = filter(data, YEAR %in% years_ma)
 #   
 #   # Run survival fit
-#   sfit = survfit(Surv(FIRSTDAY) ~ YEAR, data = data_f)
+#   sfit = survfit(Surv(event) ~ YEAR, data = data_f)
 #   
 #   # Calculate quantiles
 #   quants = quantile(sfit, abs(1-data_f$surv_y))$quantile
@@ -74,7 +74,7 @@ data3 = data_prep(bfly_f, 'Thymelicus lineola')
 # surv_diff <- survdiff(Surv(quants_ma) ~ year, data = toe_data_f)
 # surv_diff
 # 
-# ggplot(data, aes(x = FIRSTDAY, y = surv_y, color = as.factor(YEAR), group = YEAR)) + geom_line()
+# ggplot(data, aes(x = event, y = surv_y, color = as.factor(YEAR), group = YEAR)) + geom_line()
 # 
 # # No moving average
 # 
@@ -216,14 +216,14 @@ ks_emergence = function(data,    # Input data
                         ){
 
   # Fit linear model (arrival)
-  lm_ev = lm(FIRSTDAY ~ YEAR, data = data)
+  lm_ev = lm(event ~ YEAR, data = data)
   
   # Pull out slope
   lm_ev_summ = summary(lm_ev)
   lm_ev_b = lm_ev_summ$coefficients['YEAR','Estimate']
   
   # # Plot LM
-  # plot(FIRSTDAY ~ YEAR, data = data, pch = 16)
+  # plot(event ~ YEAR, data = data, pch = 16)
   # abline(lm_ev, col = 'blue', lwd = 2)
   
   # Gather years
@@ -240,17 +240,17 @@ ks_emergence = function(data,    # Input data
   
   # Detrend
   data_d = data
-  data_d$FIRSTDAY = data_d$FIRSTDAY-adj
+  data_d$event = data_d$event-adj
   
   # Fit linear model (arrival)
-  lm_ev_d = lm(FIRSTDAY ~ YEAR, data = data_d)
+  lm_ev_d = lm(event ~ YEAR, data = data_d)
   
   # Pull out slope
   lm_ev_summ_d = summary(lm_ev_d)
   lm_ev_b_d = lm_ev_summ_d$coefficients['YEAR','Estimate']
   
   # # Plot LM
-  # plot(FIRSTDAY ~ YEAR, data = data_d, pch = 16)
+  # plot(event ~ YEAR, data = data_d, pch = 16)
   # abline(lm_ev_d, col = 'blue', lwd = 2)
   
   # p value container
@@ -260,8 +260,8 @@ ks_emergence = function(data,    # Input data
   for(i in 1:length(unique(data$YEAR))){
     
     # Run KS test
-    ks = ks.test(data_d[data_d$YEAR==unique(data$YEAR)[i], 'FIRSTDAY'], 
-                 data[data$YEAR==unique(data$YEAR)[i], 'FIRSTDAY'], 
+    ks = ks.test(data_d[data_d$YEAR==unique(data$YEAR)[i], 'event'], 
+                 data[data$YEAR==unique(data$YEAR)[i], 'event'], 
                  alternative = 'less')
     
     # Fill ks_p
@@ -452,33 +452,33 @@ ks_mismatch = function(sp1,     # Input data for species 1
 ){
   
   # Standardize
-  sp1$FIRSTDAY = scale(sp1$FIRSTDAY)
-  sp2$FIRSTDAY = scale(sp2$FIRSTDAY)
+  sp1$event = scale(sp1$event)
+  sp2$event = scale(sp2$event)
   
   # Filter to common sites
   sp1 = filter(sp1, SITENAME %in% sp2$SITENAME)
   sp2 = filter(sp2, SITENAME %in% sp1$SITENAME)
   
   # Fit linear model (arrival)
-  lm_ev = lm(FIRSTDAY ~ YEAR, data = sp1)
+  lm_ev = lm(event ~ YEAR, data = sp1)
   
   # Pull out slope
   lm_ev_summ = summary(lm_ev)
   lm_ev_b = lm_ev_summ$coefficients['YEAR','Estimate']
   
   # # Plot LM
-  # plot(FIRSTDAY ~ YEAR, data = sp1, pch = 16)
+  # plot(event ~ YEAR, data = sp1, pch = 16)
   # abline(lm_ev, col = 'blue', lwd = 2)
   
   # Fit linear model (arrival)
-  lm_ev_d = lm(FIRSTDAY ~ YEAR, data = sp2)
+  lm_ev_d = lm(event ~ YEAR, data = sp2)
   
   # Pull out slope
   lm_ev_summ_d = summary(lm_ev_d)
   lm_ev_b_d = lm_ev_summ_d$coefficients['YEAR','Estimate']
   
   # # Plot LM
-  # plot(FIRSTDAY ~ YEAR, data = sp2, pch = 16)
+  # plot(event ~ YEAR, data = sp2, pch = 16)
   # abline(lm_ev_d, col = 'blue', lwd = 2)
   
   # p value container
@@ -488,8 +488,8 @@ ks_mismatch = function(sp1,     # Input data for species 1
   for(i in 1:length(unique(sp1$YEAR))){
     
     # Run KS test
-    ks = ks.test(sp2[sp2$YEAR==unique(sp2$YEAR)[i], 'FIRSTDAY'], 
-                 sp1[sp1$YEAR==unique(sp1$YEAR)[i], 'FIRSTDAY'], 
+    ks = ks.test(sp2[sp2$YEAR==unique(sp2$YEAR)[i], 'event'], 
+                 sp1[sp1$YEAR==unique(sp1$YEAR)[i], 'event'], 
                  alternative = alt)
     
     # Fill ks_p
@@ -560,9 +560,25 @@ for(i in 1:length(unique(bfly_f$SPECIES_NAME))){
   # Load in data
   sp = data_prep(bfly_f, unique(bfly_f$SPECIES_NAME)[i])
   
+  # Run individual curves
+  em = cbind(species = unique(bfly_f$SPECIES_NAME)[i], ks_emergence(sp, plot = F))
+  dc = cbind(species = unique(bfly_f$SPECIES_NAME)[i], ks_decouple(sp, plot = F))
+  
+  # Calculate classification identifier
+  class_val = max(em$emerged, na.rm = T) + (max(dc$emerged, na.rm = T) * 2)
+  
+  # Calculate class in text
+  class = switch(as.character(class_val),
+                 '0' = 'no signal',
+                 '1' = 'shifting',
+                 '2' = 'decoupling', 
+                 '3' = 'combination')
+    
   # Run curves
-  em_curve = rbind(em_curve, cbind(species = unique(bfly_f$SPECIES_NAME)[i], ks_emergence(sp, plot = F)))
-  dc_curve = rbind(dc_curve, cbind(species = unique(bfly_f$SPECIES_NAME)[i], ks_decouple(sp, plot = F)))
+  em_curve = rbind(em_curve, em)
+  dc_curve = rbind(dc_curve, cbind(dc, class))
+  
+  # Classify
   
 } # End species loop
 
@@ -603,6 +619,27 @@ legend('topright', col = c('chartreuse2', 'firebrick1', 'darkorange'), lwd = 2,
        legend = c('Shifted', 'Decoupled', 'Combination'), bty = 'n', lty = 'solid')
 legend('top', lty = c('solid', 'dashed'), legend = c('Classification','Effect'), lwd = 2, bty = 'n')
 
+# Proportional  version
+conc_curve_p = conc_curve
+
+# Divide by species to get proportions
+conc_curve_p[,-1] = conc_curve_p[,-1]/conc_curve$sp
+
+# Create climate change column
+conc_curve_p$n_cc = 1-conc_curve_p$n_ncc
+
+# Plot
+plot(n_cc ~ year, data = conc_curve_p, col = 'black', type = 'l', lwd = 2,
+     xlab = 'Year', ylab = 'Number of Species Emerged', ylim = c(0, 1))
+lines(n_em ~ year, data = conc_curve_p, col = 'chartreuse2', type = 'l', lwd = 2, lty = 'dashed')
+lines(n_dc ~ year, data = conc_curve_p, col = 'firebrick1', type = 'l', lwd = 2, lty = 'dashed')
+lines(n_shift ~ year, data = conc_curve_p, col = 'chartreuse2', type = 'l', lwd = 2)
+lines(n_decouple ~ year, data = conc_curve_p, col = 'firebrick1', type = 'l', lwd = 2)
+lines(n_cb ~ year, data = conc_curve_p, col = 'darkorange', type = 'l', lwd = 2)
+legend('topleft', col = c('chartreuse2', 'firebrick1', 'darkorange'), lwd = 2,
+       legend = c('Shifted', 'Decoupled', 'Combination'), bty = 'n', lty = 'solid')
+legend('left', lty = c('solid', 'dashed'), legend = c('Classification','Effect'), lwd = 2, bty = 'n')
+
 # Try ggplot
 conc_curve_l = select(conc_curve, year, n_shift, n_decouple, n_cb, n_ncc)
 
@@ -623,20 +660,40 @@ rownames(curve_matrix) = unique(all_curves$species)
 colnames(curve_matrix) = unique(all_curves$year)
 
 # Condense all curves
-all_curves$class = all_curves$unaffected
-all_curves$class = ifelse(all_curves$shift == 1, 2, all_curves$class)
-all_curves$class = ifelse(all_curves$decouple == 1, 3, all_curves$class)
-all_curves$class = ifelse(all_curves$combination == 1, 4, all_curves$class)
+all_curves$class_c = all_curves$unaffected
+all_curves$class_c = ifelse(all_curves$shift == 1, 2, all_curves$class_c)
+all_curves$class_c = ifelse(all_curves$decouple == 1, 3, all_curves$class_c)
+all_curves$class_c = ifelse(all_curves$combination == 1, 4, all_curves$class_c)
 
 # Reformat to matrix
-curve_matrix = all_curves %>% select(species, year, class)
+curve_matrix = all_curves %>% select(species, year, class, class_c)
+
+# # Run classification
+# class = classify(bfly_f)
+# 
+# # Reduce columns
+# class = select(class, species, class)
+# 
+# # Rename columns
+# colnames(class) = c('species', 'final')
+# 
+# # Join classification
+# curve_matrix = left_join(curve_matrix, class)
+
+# Factorize final class
+curve_matrix$final = as.numeric(factor(curve_matrix$class, levels = c('no change', 'decoupling', 'shifting', 'combination')))
+
+# Sort
+curve_matrix = arrange(curve_matrix, as.numeric(final), species, year) %>%
+  mutate(order = match(species, unique(species)))
 
 # Plot p-value matrix
-ggplot(curve_matrix, aes(x = year, y = species)) +
-  # geom_raster(aes(fill = (sig)), alpha = 0.75) +
-  geom_raster(aes(fill = as.factor(class))) +
+ggplot(curve_matrix, aes(x = year, y = order)) +
+  geom_raster(aes(fill = as.factor(class_c))) +
   scale_fill_brewer(palette = 'Set2', na.value = 'gray', labels = c('No Signal', 'Shift', 'Decouple', 'Combination')) +
-  theme_bw() + labs(x = 'Species', y = 'Year', fill = 'Classification')
+  theme_classic() + labs(x = 'Year', y = 'Species', fill = 'Classification') +
+  scale_y_continuous(breaks = unique(curve_matrix$order), labels = unique(curve_matrix$species)) +
+  scale_x_continuous(trans = 'reverse')
   
   
   

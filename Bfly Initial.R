@@ -14,6 +14,9 @@ library(plotly)
 bfly = read.csv('./Butterflies/data/ukbmsphenology2022.csv')
 temp = read.csv('./Butterflies/data/uktemps.csv')
 
+# Select event
+bfly$event = bfly$MEAN_FLIGHT_DATE
+
 # Rename temperature column
 colnames(temp) = c('Date', 'Temp')
 
@@ -30,10 +33,10 @@ temp = filter(temp, temp$YEAR %in% bfly$YEAR)
 temp$yday = yday(temp$Date)
 
 # Correct to butterfly dates
-temp$FIRSTDAY = ifelse(leap_year(temp$YEAR), temp$yday-91, temp$yday-90)
+temp$event_r = ifelse(leap_year(temp$YEAR), temp$yday-91, temp$yday-90)
 
 # Filter temp
-temp = temp[,c('Temp', 'YEAR', 'FIRSTDAY')]
+temp = temp[,c('Temp', 'YEAR', 'event_r')]
 
 # Calculate mean temperature
 temp_mean = group_by(temp, YEAR) %>% summarize(temp = mean(Temp)) %>% mutate(temp_norm = (temp - mean(temp))/sd(temp))
@@ -45,19 +48,22 @@ summary(temp_lm)
 # Plot normalize temperature
 ggplot(temp_mean, aes(x = YEAR, y = temp_norm)) + geom_line() + geom_point() + stat_smooth(method = 'lm')
 
+# Round event
+bfly$event_r = round(bfly$event)
+
 # Join temperature
-bfly = left_join(bfly, temp, by = c('YEAR', 'FIRSTDAY'))
+bfly = left_join(bfly, temp, by = c('YEAR', 'event_r'))
 
 # Plot butterflies
 
-# Filter first brood
-bfly_0 = filter(bfly, NUMBER_OF_BROODS == 1)
-bfly_1 = filter(bfly, BROOD == 1)
-bfly_f = rbind(bfly_1, bfly_0)
-bfly_f = arrange(bfly_f, YEAR) %>% filter(YEAR >= 1979)
+# # Filter first brood
+# bfly_0 = filter(bfly, NUMBER_OF_BROODS == 1)
+# bfly_1 = filter(bfly, BROOD == 1)
+# bfly_f = rbind(bfly_1, bfly_0)
+bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0))
 
-# # plot
-# ggplot(bfly_f, aes(x = YEAR, y = FIRSTDAY)) + geom_point() +
+# # plot all butterfly arrival time series
+# ggplot(bfly_f, aes(x = YEAR, y = event)) + geom_point() +
 #   stat_smooth(method = 'glm') + facet_wrap(~SPECIES_NAME)
 
 # Function for prepping data
@@ -76,9 +82,9 @@ data_prep = function(input, species){
     
     dy = filter(data, YEAR == unique(data$YEAR)[i])
     
-    s = survfit(formula = Surv(FIRSTDAY) ~ 1, data = dy)
+    s = survfit(formula = Surv(event) ~ 1, data = dy)
     
-    df = rbind(df, data.frame(YEAR = unique(data$YEAR)[i], FIRSTDAY = s$time, surv_y = s$surv))
+    df = rbind(df, data.frame(YEAR = unique(data$YEAR)[i], event = s$time, surv_y = s$surv))
     
   } # end year loop
   
@@ -89,7 +95,7 @@ data_prep = function(input, species){
   # Rate of change
   
   # Survival model by year
-  surv_by = survfit(formula = Surv(FIRSTDAY) ~ YEAR, data = data)
+  surv_by = survfit(formula = Surv(event) ~ YEAR, data = data)
   
   # Calculate quantiles on all data
   quant_all = quantile(surv_by, abs(1-data$surv_y))$quantile
@@ -104,7 +110,7 @@ data_prep = function(input, species){
   data_quants = cbind(data, quantile = quant_avg)
   
   # Calculate residual
-  data_quants$residual = data_quants$quantile - data_quants$FIRSTDAY
+  data_quants$residual = data_quants$quantile - data_quants$event
   
   # Return
   return(data_quants)
@@ -113,42 +119,37 @@ data_prep = function(input, species){
 
 
 # Classify phenological responses
-classify = function(data){
+classify = function(data_s){
   
   # Slope storage object
   slopes = data.frame(species = NULL, event = NULL, temp = NULL)
+
+  # # Prep data
+  # data_s = data_prep(data, unique(data$SPECIES_NAME)[i])
   
-  # Slope loop
-  for(i in 1:length(unique(data$SPECIES_NAME))){
-    
-    # Prep data
-    data_s = data_prep(data, unique(data$SPECIES_NAME)[i])
-    
-    # Normalize data
-    data_s$FIRSTDAY = (data_s$FIRSTDAY - mean(data_s$FIRSTDAY))/sd(data_s$FIRSTDAY)
-    data_s$Temp = (data_s$Temp - mean(data_s$Temp))/sd(data_s$Temp)
-    
-    # Run linear models, extract slopes
-    e_summ = summary(lm(data = data_s, FIRSTDAY ~ YEAR))
-    t_summ = summary(lm(data = data_s, Temp ~ YEAR))
-    
-    # Run linear models, extract slopes
-    e_slope = e_summ$coefficients['YEAR','Estimate']
-    t_slope = t_summ$coefficients['YEAR','Estimate']
-    
-    # Run linear models, extract slopes
-    e_p = e_summ$coefficients['YEAR','Pr(>|t|)']
-    t_p = t_summ$coefficients['YEAR','Pr(>|t|)']
-    
-    # Object to add to data frame
-    add = data.frame(species = unique(data$SPECIES_NAME)[i], 
-                     event = e_slope, temp = t_slope, event_p = e_p, temp_p = t_p)
-    
-    # Add to data frame
-    slopes = rbind(slopes, add)
-    
-  } # End slope loop
+  # # Normalize data
+  # data_s$event = (data_s$event - mean(data_s$event))/sd(data_s$event)
+  # data_s$Temp = (data_s$Temp - mean(data_s$Temp))/sd(data_s$Temp)
   
+  # Run linear models, extract slopes
+  e_summ = summary(lm(data = data_s, event ~ YEAR))
+  t_summ = summary(lm(data = data_s, Temp ~ YEAR))
+  
+  # Run linear models, extract slopes
+  e_slope = e_summ$coefficients['YEAR','Estimate']
+  t_slope = t_summ$coefficients['YEAR','Estimate']
+  
+  # Run linear models, extract slopes
+  e_p = e_summ$coefficients['YEAR','Pr(>|t|)']
+  t_p = t_summ$coefficients['YEAR','Pr(>|t|)']
+  
+  # Object to add to data frame
+  add = data.frame(species = unique(data_s$SPECIES_NAME), 
+                   event = e_slope, temp = t_slope, event_p = e_p, temp_p = t_p)
+  
+  # Add to data frame
+  slopes = rbind(slopes, add)
+
   # # Calculate difference in slopes
   # slopes$diff = slopes$event+slopes$temp
   # slopes$diff_n = slopes$event+temp_lm$coefficients['YEAR']
@@ -171,3 +172,4 @@ classify = function(data){
   return(slopes)
   
 } # End classify function
+

@@ -38,13 +38,13 @@ data_quants = data_prep(bfly_f, 'Vanessa atalanta')
 #   stat_smooth(method = 'glm') + 
 #   theme(text = element_text(size = 20))
 # 
-# # Plot temerature over time
+# # Plot temperature over time
 # ggplot(data_quants, (aes(y = Temp, x = YEAR))) + geom_point() +
 #   labs(x = 'Year', y = 'Temperature at Arrival')  + 
 #   stat_smooth(method = 'glm') + 
 #   theme(text = element_text(size = 20))
 # 
-# # Plot temerature at arrival
+# # Plot temperature at arrival
 # ggplot(data_quants, (aes(y = Temp, x = FIRSTDAY, color = YEAR))) + geom_point() +
 #   labs(x = 'Day of Arrival', y = 'Temperature at Arrival')  + 
 #   stat_smooth(method = 'glm') + 
@@ -56,67 +56,17 @@ data_quants = data_prep(bfly_f, 'Vanessa atalanta')
 # t_slope = summary(lm(data = data_quants, Temp ~ YEAR))$coefficients['YEAR',]
 
 
-classify = function(data){
-
-  # Slope storage object
-  slopes = data.frame(species = NULL, event = NULL, temp = NULL)
+# Loop through species
+slopes = NULL
+for(i in 1:length(unique(bfly_f$SPECIES_NAME))){
   
-  # Slope loop
-  for(i in 1:length(unique(data$SPECIES_NAME))){
-    
-    # Prep data
-    data_s = data_prep(data, unique(data$SPECIES_NAME)[i])
-    
-    # Normalize data
-    data_s$FIRSTDAY = (data_s$FIRSTDAY - mean(data_s$FIRSTDAY))/sd(data_s$FIRSTDAY)
-    data_s$Temp = (data_s$Temp - mean(data_s$Temp))/sd(data_s$Temp)
-    
-    # Run linear models, extract slopes
-    e_summ = summary(lm(data = data_s, FIRSTDAY ~ YEAR))
-    t_summ = summary(lm(data = data_s, Temp ~ YEAR))
-    
-    # Run linear models, extract slopes
-    e_slope = e_summ$coefficients['YEAR','Estimate']
-    t_slope = t_summ$coefficients['YEAR','Estimate']
-    
-    # Run linear models, extract slopes
-    e_p = e_summ$coefficients['YEAR','Pr(>|t|)']
-    t_p = t_summ$coefficients['YEAR','Pr(>|t|)']
-    
-    # Object to add to data frame
-    add = data.frame(species = unique(data$SPECIES_NAME)[i], 
-                     event = e_slope, temp = t_slope, event_p = e_p, temp_p = t_p)
-    
-    # Add to data frame
-    slopes = rbind(slopes, add)
-    
-  } # End slope loop
+  # Run data_prep
+  data = data_prep(bfly_f, unique(bfly_f$SPECIES_NAME)[i])
   
-  # # Calculate difference in slopes
-  # slopes$diff = slopes$event+slopes$temp
-  # slopes$diff_n = slopes$event+temp_lm$coefficients['YEAR']
+  # Classify
+  slopes = rbind(slopes, classify(data))
   
-  # Create significance column
-  slopes$event_sig = ifelse(slopes$event_p < 0.05, TRUE, FALSE)
-  slopes$temp_sig = ifelse(slopes$temp_p < 0.05, TRUE, FALSE)
-  
-  # Create classification column
-  slopes$class = ifelse((slopes$event_sig == TRUE) & (slopes$temp_sig == TRUE), 'combination', NA)
-  slopes$class = ifelse((slopes$event_sig == FALSE) & (slopes$temp_sig == FALSE), 'no change', slopes$class)
-  slopes$class = ifelse((slopes$event_sig == TRUE) & (slopes$temp_sig == FALSE), 'shifting', slopes$class)
-  slopes$class = ifelse((slopes$event_sig == FALSE) & (slopes$temp_sig == TRUE), 'decoupling', slopes$class)
-  
-  # Classify overshoots
-  slopes$class = ifelse((slopes$class == 'combination') & (slopes$temp < 0), 'shifting', slopes$class)
-  slopes$class = ifelse((slopes$class == 'combination') & (slopes$event > 0), 'decoupling', slopes$class)
-
-  # Return
-  return(slopes)
-  
-} # End classify function
-  
-# Run function
-slopes = classify(bfly_f)
+} # End classification loop
 
 # Load in trait data
 traits = read.csv('./Butterflies/bfly_traits/data/ecological_traits_2022.csv', skip = 1)
@@ -127,17 +77,23 @@ traits$scientific_name = gsub('\xa0', ' ', traits$scientific_name, useBytes = T)
 
 # Join classifications to traits
 class = left_join(slopes, traits, by = join_by(x$species == y$scientific_name)) %>%
-  select(species, class, long_term_distribution_trend_gb) %>% 
-  filter((is.na(long_term_distribution_trend_gb) == F) & (nchar(long_term_distribution_trend_gb) > 0)) %>%
-  mutate(long_term_distribution_trend_gb = as.numeric(gsub('%', '', long_term_distribution_trend_gb))) %>%
+  select(species, class, forewing_maximum) %>% 
+  filter((is.na(forewing_maximum) == F) & (nchar(forewing_maximum) > 0)) %>%
+  mutate(forewing_maximum = as.numeric(gsub('%', '', forewing_maximum))) %>%
+  filter(class != 'no change')
+
+# Join classifications to traits (categorical)
+class = left_join(slopes, traits, by = join_by(x$species == y$scientific_name)) %>%
+  select(species, class, obligate_univoltine) %>% 
+  mutate(cat = as.factor(ifelse(is.na(obligate_univoltine), 0 , 1))) %>%
   filter(class != 'no change')
 
 # Plot abundance by class
-ggplot(class, aes(x = class, y = long_term_distribution_trend_gb, group = class, fill = class)) +
+ggplot(class, aes(x = class, y = cat, group = class, fill = class)) +
   geom_boxplot()
 
 # Filter out NAs in abundance trend
-test = aov(long_term_distribution_trend_gb ~ class, data = class)
+test = aov(obligate_univoltine ~ class, data = class)
 summary(test)
 tukey = TukeyHSD(test)
 plot(tukey)
