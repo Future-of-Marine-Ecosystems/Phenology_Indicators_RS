@@ -47,3 +47,26 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+Bays Initial.R
+Bays.RData
+Bays/1972-2023_CBMatrix_Public.csv
+Bays/1972-2023_CBMatrix_Public.xlsx
+Bays/BayStudy_MWT_1980-2023_FishMatrix_Sept2024.csv
+Bays/BayStudy_MWT_1980-2023_FishMatrix_Sept2024.xlsx
+Bays/BayStudy_OT_1980-2023_FishMatrix_Sept2024.xlsx
+Bays/bh_physical.csv
+Bays/Fournier_et_al_abundance_trends.csv
+Bays/Fournier_et_al_classifications.csv
+Bays/Fournier_et_al_correlations.csv
+Bays/Fournier_et_al_peak_dates.csv
+Bays/Fournier_et_al_regional_trends.csv
+Bays/Fournier_et_al_trivariate_results.csv
+Bays/README.md
+Bays/temp_mas.RData
+Cherry/KyotoFullFlower7.xls
+Cherry/cherry.csv
+Cherry/004.csv
+Cherry/004-LAPTOP-CUOR2ELB.csv
+*.docx
+*.svg
+TOE.R

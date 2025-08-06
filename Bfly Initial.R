@@ -6,6 +6,9 @@ library(tidyverse)
 library(survival)
 library(lubridate)
 library(plotly)
+library(phenometrics)
+
+# source('TOE.R')
 
 # Working Directory
 # setwd('C:/Users/R3686/OneDrive - Dalhousie University/Documents/Acoustic Tracking/Data/Butterflies')
@@ -60,116 +63,28 @@ bfly = left_join(bfly, temp, by = c('YEAR', 'event_r'))
 # bfly_0 = filter(bfly, NUMBER_OF_BROODS == 1)
 # bfly_1 = filter(bfly, BROOD == 1)
 # bfly_f = rbind(bfly_1, bfly_0)
-bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0))
+bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0)) %>%
+  filter(FIRSTDAY != LASTDAY)
 
 # # plot all butterfly arrival time series
 # ggplot(bfly_f, aes(x = YEAR, y = event)) + geom_point() +
 #   stat_smooth(method = 'glm') + facet_wrap(~SPECIES_NAME)
+# 
+# # Gather all trends
+# test = group_by(bfly_f, SPECIES_NAME) %>% summarize(trend = summary(lm(event ~ YEAR))$coefficients[2])
 
-# Function for prepping data
-data_prep = function(input, species){
-  
-  # Filter data
-  data = filter(input, SPECIES_NAME == species) # data
-  
-  # # Remove single record years
-  # data = group_by(data, YEAR)
-  # data = data %>% filter(!(YEAR %in% group_keys(data)[[1]][which(group_size(data) == 1)]))
-  
-  # Calculate survival in-year
-  df = NULL
-  for(i in 1:length(unique(data$YEAR))){
-    
-    dy = filter(data, YEAR == unique(data$YEAR)[i])
-    
-    s = survfit(formula = Surv(event) ~ 1, data = dy)
-    
-    df = rbind(df, data.frame(YEAR = unique(data$YEAR)[i], event = s$time, surv_y = s$surv))
-    
-  } # end year loop
-  
-  # Join survival in-year
-  data = left_join(data, df)
-  
-  
-  # Rate of change
-  
-  # Survival model by year
-  surv_by = survfit(formula = Surv(event) ~ YEAR, data = data)
-  
-  # Calculate quantiles on all data
-  quant_all = quantile(surv_by, abs(1-data$surv_y))$quantile
-  
-  # Fix row names
-  rownames(quant_all) = gsub('year=', '', rownames(quant_all))
-  
-  # Calculate average quantile
-  quant_avg = colMeans(quant_all)
-  
-  # Join average quantile to original data
-  data_quants = cbind(data, quantile = quant_avg)
-  
-  # Calculate residual
-  data_quants$residual = data_quants$quantile - data_quants$event
-  
-  # Return
-  return(data_quants)
-  
-} # End data_prep function
+# Add common column names
+bfly_f$species = bfly_f$SPECIES_NAME
+bfly_f$year = bfly_f$YEAR
+bfly_f$env = bfly_f$Temp
+ 
 
 
-# Classify phenological responses
-classify = function(data_s){
-  
-  # Slope storage object
-  slopes = data.frame(species = NULL, event = NULL, temp = NULL)
 
-  # # Prep data
-  # data_s = data_prep(data, unique(data$SPECIES_NAME)[i])
-  
-  # # Normalize data
-  # data_s$event = (data_s$event - mean(data_s$event))/sd(data_s$event)
-  # data_s$Temp = (data_s$Temp - mean(data_s$Temp))/sd(data_s$Temp)
-  
-  # Run linear models, extract slopes
-  e_summ = summary(lm(data = data_s, event ~ YEAR))
-  t_summ = summary(lm(data = data_s, Temp ~ YEAR))
-  
-  # Run linear models, extract slopes
-  e_slope = e_summ$coefficients['YEAR','Estimate']
-  t_slope = t_summ$coefficients['YEAR','Estimate']
-  
-  # Run linear models, extract slopes
-  e_p = e_summ$coefficients['YEAR','Pr(>|t|)']
-  t_p = t_summ$coefficients['YEAR','Pr(>|t|)']
-  
-  # Object to add to data frame
-  add = data.frame(species = unique(data_s$SPECIES_NAME), 
-                   event = e_slope, temp = t_slope, event_p = e_p, temp_p = t_p)
-  
-  # Add to data frame
-  slopes = rbind(slopes, add)
 
-  # # Calculate difference in slopes
-  # slopes$diff = slopes$event+slopes$temp
-  # slopes$diff_n = slopes$event+temp_lm$coefficients['YEAR']
-  
-  # Create significance column
-  slopes$event_sig = ifelse(slopes$event_p < 0.05, TRUE, FALSE)
-  slopes$temp_sig = ifelse(slopes$temp_p < 0.05, TRUE, FALSE)
-  
-  # Create classification column
-  slopes$class = ifelse((slopes$event_sig == TRUE) & (slopes$temp_sig == TRUE), 'combination', NA)
-  slopes$class = ifelse((slopes$event_sig == FALSE) & (slopes$temp_sig == FALSE), 'no change', slopes$class)
-  slopes$class = ifelse((slopes$event_sig == TRUE) & (slopes$temp_sig == FALSE), 'shifting', slopes$class)
-  slopes$class = ifelse((slopes$event_sig == FALSE) & (slopes$temp_sig == TRUE), 'decoupling', slopes$class)
-  
-  # Classify overshoots
-  slopes$class = ifelse((slopes$class == 'combination') & (slopes$temp < 0), 'shifting', slopes$class)
-  slopes$class = ifelse((slopes$class == 'combination') & (slopes$event > 0), 'decoupling', slopes$class)
-  
-  # Return
-  return(slopes)
-  
-} # End classify function
+
+
+
+
+
 
