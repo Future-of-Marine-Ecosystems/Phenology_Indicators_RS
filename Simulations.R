@@ -5,8 +5,6 @@ library(doSNOW)
 library(phenometrics)
 library(dplyr)
 
-# source('TOE.R')
-
 # Samples
 samples = seq(5, 255, 5)
 

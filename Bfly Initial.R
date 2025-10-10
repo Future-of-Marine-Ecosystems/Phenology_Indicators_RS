@@ -1,5 +1,4 @@
 # Butterfly functions and initialization
-# Reid Steele, 11/21/2024
 
 # Libraries
 library(tidyverse)

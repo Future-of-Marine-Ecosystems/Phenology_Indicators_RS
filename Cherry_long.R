@@ -1,5 +1,4 @@
 # Cherry Blossom Bloom Time Analyses (long term)
-# Reid Steele, April 28 2025
 
 # Libraries
 library(phenometrics)
