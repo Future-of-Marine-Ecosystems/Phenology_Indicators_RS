@@ -11,13 +11,13 @@ library(tidyverse)
 data <- read.csv("https://ourworldindata.org/grapher/date-of-the-peak-cherry-tree-blossom-in-kyoto.csv?v=1&csvType=full&useColumnShortNames=true")
 
 # Rename columns
-colnames(data) = c('entity', 'code', 'year', 'event1', 'event')
+colnames(data) = c('entity', 'code', 'year', 'ma', 'yr')
 
 # remove NAs
 data = arrange(data, year)
  
 # Filter to needed columns
-data_filt = select(data, year, event)
+data_filt = select(data, year, yr)
 
 
 # Calculate expanded dataset
@@ -27,18 +27,18 @@ for(i in 1:nrow(data_filt)){
 
   # Calculate minimum year
   curyear = data_filt$year[i]
-  minyear = data_filt$year[i]-49
+  minyear = data_filt$year[i]-19
 
   # Filter to last 20 years
   ma_data = filter(data_filt, (year <= curyear) & (year >= minyear)) %>%
-    filter(is.na(event) == F)  # Remove NAs
+    filter(is.na(yr) == F)  # Remove NAs
 
   # Check for min years, calculate moving average if so
   if(nrow(ma_data) >= 5){
 
     # Calculate
-    data_ma = rbind(data_ma, cbind(year = curyear, event = mean(ma_data$event, na.rm = T)))
-    data_exp = rbind(data_exp, cbind(year = curyear, event = ma_data$event, eyear = ma_data$year))
+    data_ma = rbind(data_ma, cbind(year = curyear, event = mean(ma_data$yr, na.rm = T)))
+    data_exp = rbind(data_exp, cbind(year = curyear, event = ma_data$yr, eyear = ma_data$year))
 
   } # End if checking for min years
 
@@ -48,10 +48,10 @@ for(i in 1:nrow(data_filt)){
 data_ma = as.data.frame(data_ma); data_exp = as.data.frame(data_exp)
 
 # # Remove very early years
-# data = filter(data, year >=1000)
+data = left_join(data, data_ma) %>% filter(year >=1000) %>% filter(!is.na(event))
 
 # Test emergence
-ks_win = emp_tope(data, alt = 'two.sided', max_y = 50, unemergence = T, emt = 5, quants = c(0.2, 0.8))
+ks_win = emp_tope(data, alt = 'two.sided', max_y = 50, unemergence = T, emt = 10, quants = c(0.25, 0.75))
 
 # Gather emergences
 em = ks_win[ks_win$emerged == 1,]
@@ -64,9 +64,9 @@ em = filter(em, !((em$year - 1) %in% em$year))
 
 # Plot time series
 # data_plot = filter(data_ma, year >= 895)
-ggplot(data, aes(x = year, y = event1)) + geom_line() +
+ggplot(data, aes(x = year, y = event)) + geom_line() +
   geom_vline(xintercept = em$year, color = 'red') + theme_classic() +
-  geom_point(inherit.aes = F, aes(x = year, y = event))
+  geom_point(inherit.aes = F, aes(x = year, y = yr))
 
 # Apply unemergence
 ks_win_unem = ks_win

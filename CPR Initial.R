@@ -92,10 +92,10 @@ data_long$year = data_long$Year
 echeck = group_by(data_long, species, month) %>% filter(abundance > 0) %>%
   summarize(nmean = (n()))
 
-# Average monthly samples, remove any under 100
+# Average monthly samples, remove any under 200
 mcheck = group_by(echeck, species) %>% summarize(mmean = mean(nmean), max = max(nmean))
 
-# Filter out monthly samples under 100
+# Filter out monthly samples under 200
 data_filt = filter(data_long, species %in% mcheck$species[which(mcheck$max > 200)])
 
 # Filter down mcheck and echeck
@@ -209,7 +209,7 @@ lz_out = group_by(lz_event, species) %>% summarize(iqr = IQR(event),
                                                    lower = LQ-1.5*iqr,
                                                    upper = UQ+1.5*iqr)
 # Join to lz_event
-lz_event = left_join(lz_event, lz_out)
+lz_event = left_join(lz_event, lz_out) %>% mutate(outlier = ifelse((event <= upper) & (event >= lower), 0, 1))
 
 # Filter out outliers
 cpr_f = lz_event %>% filter(event <= upper) %>% filter(event >= lower)# %>% filter(ltotab >= quantile(ltotab, 0.05))
@@ -221,132 +221,17 @@ save.image('cpr_results.RData')
 # # # Class by year
 # # class_by_year(planktys)
 # 
-# ggplot(lz_event, aes(x = year, y = event, color = stab)) + scale_color_continuous(type = 'viridis') +
-#   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
+ggplot(lz_event, aes(x = year, y = event)) + 
+  facet_wrap(~species) + geom_point(aes(color = as.factor(outlier))) + geom_smooth(method = 'lm')
 # 
-# ggplot(cpr_f, aes(x = year, y = event, color = stab)) + scale_color_continuous(type = 'viridis') +
-#   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
+ggplot(lz_event, aes(x = year, y = event, color = stab)) + scale_color_continuous(type = 'viridis') +
+  facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
 # 
-# ggplot(lz_event, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
-#   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
+ggplot(lz_event, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
+  facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
 # 
-# ggplot(cpr_f, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
-#   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
-# 
-# ggplot(cpr_f, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
-#   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
-# 
-# 
-# # p = ks_emergence(as.data.frame(filter(cpr_f, species == 4)))
-# # 
-# # abline(lm(data = p, p ~ year))
-# # 
-# # d = ks_decouple(as.data.frame(filter(cpr_f, species == 6)))
-# # 
-# # abline(lm(data = d, p ~ year))
-# # 
-# # Run community
-# planktys = community(as.data.frame(cpr_f), emt = 5, quants = c(0.25, 0.75))
-# 
-# # Class by species
-# test2 = class_by_species(planktys)
-# 
-# 
-# # planktys2 = community(as.data.frame(doodlyda), emt = 5, em_alt = 'two.sided', dc_alt = 'two.sided')
-# # 
-# # # Class by species
-# # test2 = class_by_species(planktys2)
-# # 
-# # # Run 
-# # planktys3 = community(as.data.frame(doodlydoo), emt = 5, em_alt = 'two.sided', dc_alt = 'two.sided')
-# # 
-# # # Class by species
-# # test3 = class_by_species(planktys2)
-# 
-# 
-# 
-# 
-# 
-# # Create simulated datasets
-# simyears = (max(test$year)+1):2100 # Years to simulate
-# planktys_sim = NULL # Carrier object
-# sim_data = NULL # data carrier object
-# mm_sim = NULL
-# 
-# # Run 100 instances to average out randomness from sampling
-# for(i in 1:100){
-# 
-#   # Simulate new time series for simulated years
-#   sim_test = sim_ts(test, simyears)
-#   
-#   # Bind each simulation into 1 data frame, run = instance index
-#   sim_data = rbind(sim_data, data.frame(sim_test, run = i))
-#   
-#   # Bind each simulation into 1 data frame, run = instance index
-#   mm_sim = rbind(mm_sim, data.frame(comm_mismatch(as.data.frame(sim_test), quants = c(0.25,0.75)), run = i))
-#   
-#   # Bind each simulation into 1 data frame, run = instance index
-#   planktys_sim = rbind(planktys_sim, data.frame(community(as.data.frame(sim_test), quants = c(0.25,0.75)), run = i))
-#   
-#   # Show progress
-#   print(i)
-# 
-# } # End sim loop
-# 
-# # Environmental processing
-# 
-# # Calculate median emergences
-# planktys_sim_sum = group_by(planktys_sim, species, year) %>%
-#   summarize(emerged = round(median(emerged)), decoupled = round(median(decoupled)), n = n()) %>% # Calculate median (rounded) emergence years
-#   mutate(combination = ifelse((emerged == 1) & (decoupled == 1), 1, 0), # Write in classification columns to match community function output
-#          shift = ifelse((emerged == 1) & (decoupled == 0), 1, 0), 
-#          decouple = ifelse((emerged == 0) & (decoupled == 1), 1, 0), 
-#          unaffected = ifelse((emerged == 0) & (decoupled == 0), 1, 0),
-#          class_c = shift + decouple * 2 + 1)
-# 
-#  # Add class column
-# planktys_sim_sum$class = NA
-# 
-# # Enter final year and class
-# for(i in 1:length(unique(planktys_sim_sum$species))){ # Loop through species
-#   
-#   # Gather final year
-#   fyear = filter(planktys_sim_sum, species == unique(planktys_sim_sum$species)[i]) %>%
-#     filter(is.na(class_c) == F) %>% filter(year == max(year))
-#   
-#   # Enter final classification
-#   planktys_sim_sum$class[which(planktys_sim_sum$species == unique(planktys_sim_sum$species)[i])] = fyear$class_c
-#   
-# } # End final classification loop
-# 
-# # translate final classification to text
-# for(i in 1:nrow(planktys_sim_sum)){ 
-# 
-#   planktys_sim_sum$class[i] = switch(as.character(planktys_sim_sum$class[i]),
-#                                    '1' = 'no signal',
-#                                    '2' = 'shifting',
-#                                    '3' = 'decoupling', 
-#                                    '4' = 'combination')
-# 
-# }
-# 
-# # Run class by species
-# planktys_sim_cbs = class_by_species(planktys_sim_sum)
-# 
-# 
-# # Mismatch processing
-# planktys_sim_mm = group_by(mm_sim, sp1, sp2, year) %>%
-#   summarize(emerged = round(median(emerged)))
-# 
-# 
-
-# 
-# # ggplot(planktys_sim, aes(x = year, y = event, color = stab)) + scale_color_continuous(type = 'viridis') +
-# #   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
-# # 
-# # 
-# # ggplot(planktys_sim, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
-# #   facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
-
-
-
+ggplot(cpr_f, aes(x = year, y = event, color = stab)) + scale_color_continuous(type = 'viridis') +
+  facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')
+#
+ggplot(cpr_f, aes(x = year, y = env, color = stab)) + scale_color_continuous(type = 'viridis') +
+  facet_wrap(~species) + geom_point() + geom_smooth(method = 'lm')

@@ -2,6 +2,7 @@
 library(plotly)
 library(tidyverse)
 library(RColorBrewer)
+library(ggtext)
 
 # load in results
 load(('sim_results_comb.RData'))
@@ -77,6 +78,8 @@ cpr_params = left_join(cpr_spread, cpr_sd) %>%
 # Combine into one dataset
 data_params = rbind(bfly_params, cpr_params)
 
+
+
 # Limits
 range(data_params$samples)
 range(data_params$spread)
@@ -104,24 +107,24 @@ t_sim_params_spread = filter(sim_params, spread == tspread) %>%
 # Plot statistical
 samp_x_trend_stat = ggplot(t_sim_params_spread, aes(x = samples, y = trend, fill = eyear_stat)) + geom_raster() +
   geom_point(data = data_params, inherit.aes = F, aes(x = samples, y = trend, color = dataset), size = 5, show.legend = F) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Samples', y = 'Trend', fill = 'Years to Emergence\n ') +
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Years to Emergence\n ') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_text(size=35), legend.title = element_text(size = 40, angle = 270, vjust = 0.5),
-        axis.text = element_text(size = 35), axis.title = element_text(size = 35), 
-        plot.title = element_text(size = 35, hjust = 0.5)) + 
-  guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5)) + ggtitle(paste0('Spread = ', tspread))
+        legend.text = element_markdown(size=35), legend.title = element_markdown(size = 40, angle = 270, vjust = 0.5),
+        axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
+        plot.title = element_markdown(size = 35, hjust = 0.5, vjust = 0)) + 
+  guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5)) + ggtitle(paste0('Spread (*s*) = ', tspread))
 
 # Plot empirical
 samp_x_trend_emp = ggplot(t_sim_params_spread, aes(x = samples, y = trend, fill = eyear_emp)) + geom_raster(show.legend = F) +
   geom_point(data = data_params, inherit.aes = F, aes(x = samples, y = trend, color = dataset), size = 5) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Samples', y = 'Trend', fill = 'Years to Emergence') +
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Years to Emergence') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_text(size=35), legend.title = element_blank(),
-        axis.text = element_text(size = 35), axis.title = element_text(size = 35), 
-        plot.title = element_text(size = 35, hjust = 0.5)) + 
-  guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5)) + ggtitle(paste0('Spread = ', tspread))
+        legend.text = element_markdown(size=35), legend.title = element_blank(),
+        axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
+        plot.title = element_markdown(size = 35, hjust = 0.5)) + 
+  guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5))
 
 # # Make into matrix
 # t_sim_mat = spread(t_sim_params, trend, eyear_stat)
@@ -134,15 +137,15 @@ t_sim_params_samples = filter(sim_params, samples == tsamples) %>%
 # Plot statistical
 spread_x_trend_stat = ggplot(t_sim_params_samples, aes(x = spread, y = trend, fill = eyear_stat)) + geom_raster() +
   geom_point(data = data_params, inherit.aes = F, aes(x = spread, y = trend, color = dataset), size = 5, show.legend = F) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Spread', y = 'Trend', fill = 'Years to Emergence') + 
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35), 
-        plot.title = element_text(size = 35, hjust = 0.5)) + ggtitle(paste0('Samples = ', tsamples))
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Spread (*s*)', y = 'Trend (*t*)', fill = 'Years to Emergence') + 
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
+        plot.title = element_markdown(size = 35, hjust = 0.5)) + ggtitle(paste0('Replicates (*r*) = ', tsamples))
 
 # Plot empirical
 spread_x_trend_emp = ggplot(t_sim_params_samples, aes(x = spread, y = trend, fill = eyear_emp)) + geom_raster() +
   geom_point(data = data_params, inherit.aes = F, aes(x = spread, y = trend, color = dataset), size = 5, show.legend = F) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Spread', y = 'Trend', fill = 'Years to Emergence') + 
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Spread (*s*)', y = 'Trend (*t*)', fill = 'Years to Emergence') + 
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35))
 
 # # Make into matrix
 # t_sim_mat = spread(t_sim_params, trend, eyear_stat)
@@ -155,15 +158,15 @@ t_sim_params_trend = filter(sim_params, trend == ttrend) %>%
 # Plot statistical
 samp_x_spread_stat = ggplot(t_sim_params_trend, aes(x = samples, y = spread, fill = eyear_stat)) + geom_raster() +
   geom_point(data = data_params, inherit.aes = F, aes(x = samples, y = spread, color = dataset), size = 5, show.legend = F) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic()  + labs(x = 'Samples', y = 'Spread', fill = 'Years to Emergence') + 
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35), 
-        plot.title = element_text(size = 35, hjust = 0.5)) + ggtitle(paste0('Trend = ', ttrend))
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic()  + labs(x = 'Replicates (*r*)', y = 'Spread (*s*)', fill = 'Years to Emergence') + 
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
+        plot.title = element_markdown(size = 35, hjust = 0.5, vjust = 0)) + ggtitle(paste0('Trend (*t*) = ', ttrend))
 
 # Plot empirical
 samp_x_spread_emp = ggplot(t_sim_params_trend, aes(x = samples, y = spread, fill = eyear_emp)) + geom_raster() +
   geom_point(data = data_params, inherit.aes = F, aes(x = samples, y = spread, color = dataset), size = 5, show.legend = F) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic()  + labs(x = 'Samples', y = 'Spread', fill = 'Years to Emergence') + 
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic()  + labs(x = 'Replicates (*r*)', y = 'Spread (*s*)', fill = 'Years to Emergence') + 
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35))
 
 
 # # Make into matrix
@@ -196,11 +199,11 @@ t_sim_comp_spread_na = filter(sim_params_comp_na, spread == tspread) %>%
 # Plot difference
 samp_x_trend_comp = ggplot(filter(t_sim_comp_spread, !is.na(diff)), aes(x = samples, y = trend, fill = diff)) + geom_raster() +
   geom_point(data = t_sim_comp_spread_na, size = 4, pch = 21) + scale_color_distiller(palette = 'PRGn') +
-  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Samples', y = 'Trend', fill = 'Statistical - Empirical\n ') +
+  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Statistical - Empirical\n ') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_text(size=35), legend.title = element_text(size = 40, angle = 270, vjust = 0.5),
-        axis.text = element_text(size = 35), axis.title = element_text(size = 35)) + 
+        legend.text = element_markdown(size=35), legend.title = element_markdown(size = 40, angle = 270, vjust = 0.5),
+        axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35)) + 
   guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5))
 
 
@@ -219,8 +222,8 @@ t_sim_comp_samples_na = filter(sim_params_comp_na, samples == tsamples) %>%
 # Plot difference
 spread_x_trend_comp = ggplot(filter(t_sim_comp_samples, !is.na(diff)), aes(x = spread, y = trend, fill = diff)) + geom_raster() +
   geom_point(data = t_sim_comp_samples_na, size = 4, pch = 21) + scale_color_distiller(palette = 'PRGn') +
-  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Spread', y = 'Trend', fill = 'Statistical - Emprical') +
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
+  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Spread (*s*)', y = 'Trend (*t*)', fill = 'Statistical - Emprical') +
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35))
 
 
 
@@ -237,8 +240,8 @@ t_sim_comp_trend_na = filter(sim_params_comp_na, trend == ttrend) %>%
 # Plot difference
 samp_x_spread_comp = ggplot(filter(t_sim_comp_trend, !is.na(diff)), aes(x = samples, y = spread, fill = diff)) + geom_raster() +
   geom_point(data = t_sim_comp_trend_na, size = 4, pch = 21) + scale_color_distiller(palette = 'PRGn') +
-  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Samples', y = 'Spread', fill = 'Statistical - Emprical') +
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
+  scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Spread (*s*)', fill = 'Statistical - Emprical') +
+  theme(axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35))
 
 
 
