@@ -8,16 +8,16 @@ library(rerddapXtracto)
 library(phenometrics)
 
 # Load in data
-data = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_Data_LargeZooplankton_03022025.csv')
-szoo = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_Data_SmallZooplankton_03022025.csv')
-phyto = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_Data_Phytoplankton_03022025.csv')
+data = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_Data_LargeZooplankton_03022025.csv')
+szoo = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_Data_SmallZooplankton_03022025.csv')
+phyto = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_Data_Phytoplankton_03022025.csv')
 
 # Remove redundant columns
 
 # load in species lists
-llzoo = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_List_LargeZooplankton_03022025.csv');llzoo$class = 'lzoo'
-lszoo = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_List_SmallZooplankton_03022025.csv');lszoo$class = 'szoo'
-lphyt = read.csv('./CPR/CPR_DataRequest_FONIDalhousie_03Feb25/CPR_FONIDalhousie_List_Phytoplankton_03022025.csv');lphyt$class = 'phyto'
+llzoo = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_List_LargeZooplankton_03022025.csv');llzoo$class = 'lzoo'
+lszoo = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_List_SmallZooplankton_03022025.csv');lszoo$class = 'szoo'
+lphyt = read.csv('./CPR/CPR_DataRequest_03Feb25/CPR_List_Phytoplankton_03022025.csv');lphyt$class = 'phyto'
 slist = rbind(llzoo, lszoo, lphyt)
 
 # Join
