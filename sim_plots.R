@@ -110,7 +110,7 @@ samp_x_trend_stat = ggplot(t_sim_params_spread, aes(x = samples, y = trend, fill
   scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Years to Emergence\n ') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_markdown(size=35), legend.title = element_markdown(size = 40, angle = 270, vjust = 0.5),
+        legend.text = element_text(size=35), legend.title = element_text(size = 40, angle = 270, vjust = 0.5),
         axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
         plot.title = element_markdown(size = 35, hjust = 0.5, vjust = 0)) + 
   guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5)) + ggtitle(paste0('Spread (*s*) = ', tspread))
@@ -118,10 +118,10 @@ samp_x_trend_stat = ggplot(t_sim_params_spread, aes(x = samples, y = trend, fill
 # Plot empirical
 samp_x_trend_emp = ggplot(t_sim_params_spread, aes(x = samples, y = trend, fill = eyear_emp)) + geom_raster(show.legend = F) +
   geom_point(data = data_params, inherit.aes = F, aes(x = samples, y = trend, color = dataset), size = 5) + scale_color_hue(h = c(15, 300)) +
-  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Years to Emergence') +
+  scale_fill_continuous(type = 'viridis', limits = c(0,40)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', color = 'Dataset') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_markdown(size=35), legend.title = element_blank(),
+        legend.text = element_markdown(size=35), legend.title = element_text(size = 40),
         axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35), 
         plot.title = element_markdown(size = 35, hjust = 0.5)) + 
   guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5))
@@ -202,7 +202,7 @@ samp_x_trend_comp = ggplot(filter(t_sim_comp_spread, !is.na(diff)), aes(x = samp
   scale_fill_distiller(palette = 'PRGn', limits = c(-35, 35)) + theme_classic() + labs(x = 'Replicates (*r*)', y = 'Trend (*t*)', fill = 'Statistical - Empirical\n ') +
   theme(legend.position = 'right', legend.key.height= unit(2.5, 'cm'), legend.key.width= unit(2, 'cm'), 
         legend.direction = 'vertical',
-        legend.text = element_markdown(size=35), legend.title = element_markdown(size = 40, angle = 270, vjust = 0.5),
+        legend.text = element_text(size=35), legend.title = element_text(size = 40, angle = 270, vjust = 0.5),
         axis.text = element_markdown(size = 35), axis.title = element_markdown(size = 35)) + 
   guides(fill = guide_colourbar(title.position="right", title.hjust = 0.5))
 

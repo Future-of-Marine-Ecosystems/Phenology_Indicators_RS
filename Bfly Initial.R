@@ -58,12 +58,21 @@ bfly = left_join(bfly, temp, by = c('YEAR', 'event_r'))
 
 # Plot butterflies
 
+# Overwintering species
+overwinter = c('Aglais io', 'Gonepteryx rhamni')
+
 # # Filter first brood
-# bfly_0 = filter(bfly, NUMBER_OF_BROODS == 1)
-# bfly_1 = filter(bfly, BROOD == 1)
-# bfly_f = rbind(bfly_1, bfly_0)
-bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0)) %>%
-  filter(FIRSTDAY != LASTDAY)
+bfly_0 = filter(bfly, NUMBER_OF_BROODS == 1)
+bfly_1 = filter(bfly, BROOD == 1) %>% filter(!(SPECIES_NAME %in% overwinter))
+bfly_2 = filter(bfly, SPECIES_NAME %in% overwinter) %>% filter(BROOD == 2)
+bfly_f = rbind(bfly_1, bfly_0, bfly_2) %>% filter(SPECIES_NAME != 'Thymelicus lineola/sylvestris') %>%
+  filter(!((SPECIES_NAME == 'Phengaris arion')&(YEAR==1987))) %>% # Remove single observation of Phengaris arion in 1987
+  filter(FIRSTDAY != LASTDAY) %>% # Remove single observations
+  filter(YEAR >= 1979) %>%
+  arrange(YEAR) # Order on year
+
+# bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0)) %>%
+#   filter(FIRSTDAY != LASTDAY)
 
 # # plot all butterfly arrival time series
 # ggplot(bfly_f, aes(x = YEAR, y = event)) + geom_point() +
@@ -72,11 +81,13 @@ bfly_f = arrange(bfly, YEAR) %>% filter((YEAR >= 1979) & (BROOD == 0)) %>%
 # # Gather all trends
 # test = group_by(bfly_f, SPECIES_NAME) %>% summarize(trend = summary(lm(event ~ YEAR))$coefficients[2])
 
+
+
 # Add common column names
 bfly_f$species = bfly_f$SPECIES_NAME
 bfly_f$year = bfly_f$YEAR
 bfly_f$env = bfly_f$Temp
- 
+
 
 
 

@@ -106,7 +106,8 @@ cscale = c(hcl(h=240, 0, 95, alpha = 0.8), # No signalhttp://127.0.0.1:29295/gra
 bfly_traits = read.csv('./Butterflies/bfly_traits/data/ecological_traits_2022.csv', skip=1)
 
 # Multivoltine species
-species_multi = filter(bfly_traits, obligate_multivoltine == 1) %>%
+multi_exp = c('Cupido minimus', 'Vanessa atalanta', 'Vanessa cardui', 'Colias croceus')
+species_multi = filter(bfly_traits, (obligate_multivoltine == 1) | (scientific_name %in% multi_exp)) %>%
   filter(scientific_name %in% bfly_f$species)
 
 # Univoltine species
@@ -460,7 +461,7 @@ plankton_labs_p$label = c('Phyto', 'Zoo')
 max(nchar(unique(cbs_reorder$species)))
 max(nchar(unique(planktys_cmbs_reorder_p$sp1)))
 planktys_sim_cbs_reorder_p = planktys_sim_cbs_reorder
-planktys_sim_cbs_reorder_p$species = gsub('Rhizosolenia semispina', 'Rhizosolenia semispina       ', planktys_sim_cbs_reorder_p$species)
+planktys_sim_cbs_reorder$species = gsub('Rhizosolenia semispina', 'Rhizosolenia semispina    ', planktys_sim_cbs_reorder$species)
 
 
 # Plot class by species
@@ -515,7 +516,7 @@ bfly_cmbs_plot_p = ggplot(bfly_cmbs_reorder_p, aes(x = year, y = order)) +
   geom_tile(aes(fill = mismatch)) +
   scale_fill_continuous(type = 'viridis') +
   theme_classic() + labs(x = 'Year', y = 'UKBMS', fill = 'Proportion\nMismatched') +
-  scale_y_continuous(breaks = unique(bfly_cmbs_reorder$order), labels = unique(bfly_cmbs_reorder$sp1), position = 'right') + 
+  scale_y_continuous(breaks = unique(cbs_reorder$order), labels = unique(cbs_reorder$species), position = 'right') + 
   ggtitle('Mismatch') +
   theme(plot.title = element_text(size = 50, hjust = 0.5),
         axis.line.y.left = element_blank(),
@@ -534,7 +535,7 @@ plankton_cmbs_plot_p = ggplot(planktys_cmbs_reorder_p, aes(x = year, y = order))
   geom_tile(aes(fill = mismatch)) +
   scale_fill_continuous(type = 'viridis') +
   theme_classic() + labs(x = 'Year', y = 'CPR', fill = 'Proportion\nMismatched') +
-  scale_y_continuous(breaks = unique(planktys_sim_cbs_reorder_p$order), labels = unique(planktys_sim_cbs_reorder_p$species), position = 'right') + 
+  scale_y_continuous(breaks = unique(planktys_sim_cbs_reorder$order), labels = unique(planktys_sim_cbs_reorder$species), position = 'right') + 
   theme(axis.text.y.left = element_blank(),
         axis.line.y.left = element_blank(),
         axis.ticks.y.left = element_blank(),
@@ -552,7 +553,7 @@ class_leg = get_legend(cbs_plot)
 mm_leg = get_legend(bfly_cmbs_plot)
 
 # export figure
-tiff(filename = './Figures/cby_panelled.tif', width = 1800, height = 1800, units = 'px')
+tiff(filename = './Figures/cbs_panelled.tif', width = 1800, height = 1800, units = 'px')
 
 ggarrange(cbs_plot_p + theme(legend.position = 'none') + xlim(c(1979, 2019)), 
           bfly_cmbs_plot_p + theme(legend.position = 'none') + xlim(c(1979, 2019)), 
@@ -560,7 +561,7 @@ ggarrange(cbs_plot_p + theme(legend.position = 'none') + xlim(c(1979, 2019)),
           plankton_cbs_plot_p + theme(legend.position = 'none') + xlim(c(1979, 2019)), 
           plankton_cmbs_plot_p + theme(legend.position = 'none') + xlim(c(1979, 2019)), 
           class_leg,
-          nrow = 2, ncol = 3, heights = c(3.6, 1), widths = c(2,3,1))
+          nrow = 2, ncol = 3, heights = c(3.4, 1), widths = c(2,3,1))
 
 # end figure
 dev.off()
@@ -616,7 +617,7 @@ ind_plot2 = ggplot(inds, aes(x = year, y = proportion, group = group)) +
         axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35), legend.text = element_text(size = 35), 
         legend.key.width = unit(3, 'cm'), legend.position = 'inside', legend.position.inside = c(0.5, 0.5),
-        plot.margin = unit(c(1,1,1,1), "cm")) +
+        plot.margin = unit(c(1,1,1,1), "cm")) + xlim(c(1978, 2020)) +
   labs(y = 'Proportion of Emergences', x = 'Year') + ylim(c(0,1))
 
 
@@ -630,7 +631,7 @@ psi_plot = ggplot(filter(inds, emergence == 'n_em'), aes(x = year, y = proportio
         legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35), legend.text = element_text(size = 35), 
         legend.key.width = unit(3, 'cm'), legend.position = 'none', legend.position.inside = c(0.2, 0.8),
-        plot.margin = unit(c(1,1,1,1), "cm")) +
+        plot.margin = unit(c(1,1,1,1), "cm")) + xlim(c(1978, 2020)) +
   labs(y = 'Proportion of Emergences', x = 'Year') + ylim(c(0,1))
 
 
@@ -643,7 +644,7 @@ pdi_plot = ggplot(filter(inds, emergence == 'n_dc'), aes(x = year, y = proportio
         legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35), legend.text = element_text(size = 35), 
         legend.key.width = unit(3, 'cm'), legend.position = 'none', legend.position.inside = c(0.2, 0.8),
-        plot.margin = unit(c(1,1,1,1), "cm")) +
+        plot.margin = unit(c(1,1,1,1), "cm")) + xlim(c(1978, 2020)) +
   labs(y = 'Proportion of Emergences', x = 'Year') + ylim(c(0,1))
 
 
@@ -656,7 +657,7 @@ cdi_plot = ggplot(filter(inds, emergence == 'n_mm'), aes(x = year, y = proportio
         legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35), legend.text = element_text(size = 35), 
         legend.key.width = unit(3, 'cm'), legend.position = 'none', legend.position.inside = c(0.2, 0.8),
-        plot.margin = unit(c(1,1,1,1), "cm")) +
+        plot.margin = unit(c(1,1,1,1), "cm")) + xlim(c(1978, 2020)) +
   labs(y = 'Proportion of Emergences', x = 'Year') + ylim(c(0,1))
 
 
@@ -665,10 +666,10 @@ tiff(filename = './Figures/inds_sep.tif', width = 1000, height = 1500, units = '
 
 # # Arrange
 # ggarrange(psi_plot, pdi_plot, cdi_plot, inds_leg, nrow = 2, ncol = 2)
-ggarrange(psi_plot, ggplot() + theme_classic(), pdi_plot, inds_leg, cdi_plot, ggplot() + theme_classic(),
-          nrow = 3, ncol = 2, widths = c(3.75, 1))
-# ggarrange(psi_plot, pdi_plot, cdi_plot, 
-#           nrow = 3, ncol = 1)
+# ggarrange(psi_plot, ggplot() + theme_classic(), pdi_plot, inds_leg, cdi_plot, ggplot() + theme_classic(),
+#           nrow = 3, ncol = 2, widths = c(3.75, 1))
+ggarrange(psi_plot, pdi_plot, cdi_plot,
+          nrow = 3, ncol = 1)
 
 # end figure
 dev.off()
