@@ -104,6 +104,7 @@ cscale = c(hcl(h=240, 0, 95, alpha = 0.8), # No signalhttp://127.0.0.1:29295/gra
 
 # Load in trait data
 bfly_traits = read.csv('./Butterflies/bfly_traits/data/ecological_traits_2022.csv', skip=1)
+bfly_traits$scientific_name = gsub('Colias crocea', 'Colias croceus', bfly_traits$scientific_name) # Fix scientific name
 
 # Multivoltine species
 multi_exp = c('Cupido minimus', 'Vanessa atalanta', 'Vanessa cardui', 'Colias croceus')
