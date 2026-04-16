@@ -30,6 +30,9 @@ bfly_samples = group_by(bfly_f, species, year) %>%
 bfly_trend = group_by(bfly_f, species) %>%
   summarize(trend = lm(event ~ year)$coefficients[2])
 
+bfly_trend_env = group_by(bfly_f, species) %>%
+  summarize(trend = lm(env ~ year)$coefficients[2])
+
 # Check relationship between spread and SD
 summary(lm(bfly_sd$mean_sd ~ bfly_spread$spread))
 # sd ~ 1.5x spread
@@ -62,6 +65,9 @@ cpr_samples = group_by(cpr_f, species, year) %>%
 
 cpr_trend = group_by(cpr_f, species) %>%
   summarize(trend = lm(event ~ year)$coefficients[2])
+
+cpr_trend_env = group_by(cpr_f, species) %>%
+  summarize(trend = lm(env ~ year)$coefficients[2])
 
 # Check relationship between spread and SD
 summary(lm(cpr_sd$mean_sd ~ cpr_spread$spread))

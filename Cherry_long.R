@@ -50,7 +50,7 @@ data_ma = as.data.frame(data_ma); data_exp = as.data.frame(data_exp)
 data = left_join(data, data_ma) %>% filter(year >=1000) %>% filter(!is.na(event))
 
 # Test emergence
-ks_win = emp_tope(data, alt = 'two.sided', max_y = 50, unemergence = T, emt = 10, quants = c(0.25, 0.75))
+ks_win = emp_tope(data, alt = 'two.sided', max_y = 50, unemergence = T, emt = 10, quants = c(0.25, 0.75), baseline = 'moving')
 
 # Gather emergences
 em = ks_win[ks_win$emerged == 1,]
@@ -63,9 +63,9 @@ em = filter(em, !((em$year - 1) %in% em$year))
 
 # Plot time series
 # data_plot = filter(data_ma, year >= 895)
-ggplot(data, aes(x = year, y = event)) + geom_line() +
-  geom_vline(xintercept = em$year, color = 'red') + theme_classic() +
-  geom_point(inherit.aes = F, aes(x = year, y = yr))
+# ggplot(data, aes(x = year, y = event)) + geom_line() +
+#   geom_vline(xintercept = em$year, color = 'red') + theme_classic() +
+#   geom_point(inherit.aes = F, aes(x = year, y = yr))
 
 # Apply unemergence
 ks_win_unem = ks_win
@@ -74,13 +74,13 @@ ks_win_unem = ks_win
 for(i in 2:(nrow(ks_win_unem))){
   
   # check if previous row is emerged
-  if(ks_win_unem[i-1,'emerged'] == 1){
+  if((!is.na(ks_win_unem[i-1,'emerged']))&(ks_win_unem[i-1,'emerged'] == 1)){
     
     # Check next 5 values
-    crows = ks_win_unem[i:(i+4),]
+    crows = ks_win_unem[i:(i+9),]
     
     # Change to 1 unless all 5 values below threshold
-    if(all(crows$p < 0.6)){ks_win_unem[i, 'emerged'] = 0} else {ks_win_unem[i, 'emerged'] = 1}
+    if(all(crows$p == 0 | crows$p == -ks_win_unem[i-1,'p'])){ks_win_unem[i, 'emerged'] = 0} else {ks_win_unem[i, 'emerged'] = 1}
     
   }
   
@@ -96,7 +96,7 @@ for(i in 1:length(con)){
   if(i == 1){con[i] = ks_win$p[i]} else {
     
     # Set to 0 if test result is 0, else add 1 to previous value
-    if(ks_win$p[i] == 0){con[i] = 0} else{con[i] = ks_win$p[i] + con[i-1]}
+    if(ks_win$p[i] == 0){con[i] = 0} else if(ks_win$p[i] == -ks_win$p[i-1]){con[i] = 1} else{con[i] = ks_win$p[i] + con[i-1]}
     
   }
   

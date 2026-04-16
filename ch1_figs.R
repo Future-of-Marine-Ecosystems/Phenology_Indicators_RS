@@ -43,6 +43,60 @@ annotate_figure(simfig,
 dev.off()
 
 
+# Baseline and Emergence Threshold Figure
+load('sim_results_baselines_static.RData')
+
+# Convert to long format, calculate relative emergence
+sim_results_l = pivot_longer(sim_results, cols = paste0("X", 1:ntests), names_to = 'test', values_to = 'ToE') %>%
+  mutate(test = as.numeric(gsub('X', '', test)), ToE = as.numeric(ToE), base_l = as.numeric(base_l)) %>% 
+  group_by(row, test, method, emt) %>%
+  mutate(add_em = ifelse((is.na(lag(ToE))) & (!is.na(ToE)), 1, 0)) %>%
+  mutate(sub_em = ifelse((!is.na(lag(ToE))) & (is.na(ToE)), 1, 0)) %>%
+  ungroup()
+
+# # Calculate relevant counts
+# sim_results_counts = sim_results_l %>% group_by(spread, samples, trend, row, method, base_l) %>%
+#   summarize(prop_em = sum(!is.na(ToE)), add_em = sum(add_em), sub_em = -sum(sub_em)) %>%
+#   mutate(add_em_cum = cumsum(add_em), sub_em_cum = cumsum(sub_em))
+# 
+# # Plot
+# ggplot(sim_results_counts, aes(x = base_l, color = method))  + 
+#   geom_col(aes(y = add_em), fill = '#F8766D', color = 'black') + 
+#   geom_col(aes(y = sub_em), fill = '#00BFC4', color = 'black') +
+#   geom_line(aes(y = prop_em), lwd = 2) +
+#   ylim(c(-15, 100)) + theme_bw() +
+#   facet_wrap(~method)
+
+# Sim results curve
+sim_results_curve = sim_results_l %>%
+  group_by(method, row, base_l, emt) %>%
+  summarize(ToE = mean(ToE, na.rm = T)) %>%
+  filter(method %in% c('statistical_static', 'empirical_static')) %>%
+  mutate(group = paste(method, emt))
+
+# Generate plot
+bl_plot = ggplot(data = sim_results_curve, aes(x = base_l, y = ToE, color = method, alpha = as.factor(emt), group = group)) + 
+  geom_line(linewidth = 3) + theme_classic() +
+  scale_alpha_manual(name = 'Emergence\nThreshold', values = c(0.2, 0.6, 1)) +
+  scale_color_discrete(name = 'Method', labels = c('Empirical', 'Statistical')) +
+  labs(x = 'Baseline Length (years)', y = 'Time of Emergence (ToE)') +
+  theme(plot.title = element_text(size = 50, hjust = 0.5),
+        legend.title = element_text(size = 35),
+        axis.text = element_text(size = 35), 
+        axis.title = element_text(size = 35), legend.text = element_text(size = 35), 
+        legend.key.width = unit(3, 'cm'), 
+        plot.margin = unit(c(1,1,1,1), "cm"))
+
+# export figure
+tiff(filename = './Figures/baseline_sensitivity.tif', width = 1500, height = 1000, units = 'px')
+
+bl_plot
+
+# end figure
+dev.off()
+
+
+
 # Cherry Blossom
 source('Cherry_long.R')
 
@@ -57,7 +111,8 @@ max_ind = which((data_plot$emerged == 1) & ((shift(data_plot$emerged, type = 'le
 min_ind = which((data_plot$emerged == 1) & ((shift(data_plot$emerged, type = 'lag') == 0) | (is.na(shift(data_plot$emerged, type = 'lag')))))
 
 # Create emergence blocks
-emerged_block = tibble(xmin = data_plot[min_ind, 'year'], xmax = data_plot[max_ind, 'year'])
+emerged_block = tibble(xmin = data_plot[min_ind, 'year'], xmax = data_plot[max_ind, 'year']) %>%
+                       mutate(color = ifelse(data_plot[data_plot$year %in% xmin,'p'] == 1, 'blue', 'red'))
 # data_block = tibble(xmin = emerged_plot[min_ind, 'year']-19, xmax = emerged_plot[max_ind, 'year'])
 # center_block = tibble(xmin = emerged_plot[min_ind, 'year']-25, xmax = emerged_plot[max_ind, 'year']-25)
 # line_block = tibble(x = c(emerged_plot[min_ind, 'year']-49, emerged_plot[min_ind, 'year']),
@@ -67,20 +122,25 @@ emerged_block = tibble(xmin = data_plot[min_ind, 'year'], xmax = data_plot[max_i
 
 # Plot times series
 ts = ggplot(data_plot) + geom_point(aes(x = year, y = yr), size = 3) + labs(x = 'Year', y = 'Bloom Timing (Julian Day)') +
-  theme_classic() + geom_rect(data = emerged_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax), fill = 'red', alpha = 0.3) +
+  theme_classic() + geom_rect(data = emerged_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax, fill = color), alpha = 0.3) +
   geom_line(aes(x = year, y = event), lwd = 2) +
-  # geom_line(data = line_block, aes(x = x, y = y, group = block), color = 'red', lwd = 1) +
-  # geom_line(data = y_block, aes(x = x, y = y, group = block), color = 'red', lwd = 1) +
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
-  #geom_errorbar(data = line_block, aes(xmin = xmin, xmax = xmax, y = y, group = block), color = 'red')#+
-  #geom_rect(data = data_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax), fill = 'red', alpha = 0.3) 
+  scale_fill_manual(values = c('blue', 'red')) +
+  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35)) +
+  guides(fill = 'none')
+
+ts
 
 # Plot ks test power
 power = ggplot(data_plot) + geom_line(aes(x = year, y = con), lwd = 1) + theme_classic() + 
-  geom_hline(yintercept = 5, linetype = 'dashed', alpha = 0.3, lwd = 1) + labs(x = 'Year', y = 'Consecutive Positive Test Results') +
-  geom_rect(data = emerged_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax), fill = 'red', alpha = 0.3) +
-  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35))
-
+  geom_hline(yintercept = 0, lwd = 1) +
+  geom_hline(yintercept = 10, linetype = 'dashed', alpha = 0.3, lwd = 1) + 
+  geom_hline(yintercept = -10, linetype = 'dashed', alpha = 0.3, lwd = 1) +
+  labs(x = 'Year', y = 'Consecutive Positive Test Results') +
+  geom_rect(data = emerged_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax, fill = color), alpha = 0.3) +
+  scale_fill_manual(values = c('blue', 'red')) +
+  theme(axis.text = element_text(size = 35), axis.title = element_text(size = 35)) +
+  guides(fill = 'none')
+power
 
 
 # export figure
@@ -811,6 +871,19 @@ ex_tope = emp_tope(ex_data, plot = F)
 ex_em_block = data.frame(xmin = min(ex_tope[which(ex_tope$emerged == 1), 'year']), xmax = max(ex_tope[which(ex_tope$emerged == 1), 'year']))
 
 
+# Plot test results and emergence
+ex_eplot_t = ggplot(ex_data_summ, aes(x = year, y = mean_event)) + 
+  geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2) +
+  geom_point(size = 5, aes(color = ifelse(mean_event < min(ex_quants), 'red', 'black'))) +
+  stat_smooth(method = 'lm', se = F, linewidth = 3) +
+  scale_color_manual(values = c('black', 'red'), name = 'Test Result', labels = c('Negative', 'Positive')) +
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme(legend.title = element_text(size = 30), axis.text = element_text(size = 35), 
+        legend.text = element_text(size = 30), legend.background = element_blank(),
+        legend.position = 'inside', legend.position.inside = c(0.14,0.14), 
+        axis.title = element_text(size = 35)) + ylim(range_summ)
+
+
 # Plot test results
 ex_eplot_em = ggplot(ex_data_summ, aes(x = year, y = mean_event)) + 
   geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2) +
@@ -818,7 +891,6 @@ ex_eplot_em = ggplot(ex_data_summ, aes(x = year, y = mean_event)) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
   geom_rect(inherit.aes = F, data = ex_em_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = Inf), fill = 'red', alpha = 0.3) +
   scale_color_manual(values = c('black', 'red'), name = 'Test Result', labels = c('Negative', 'Positive')) +
-  geom_hline(yintercept = min(ex_quants), linetype = 'dashed', color = 'red', linewidth = 2) +
   theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
   theme(legend.title = element_text(size = 30), axis.text = element_text(size = 35), 
         legend.text = element_text(size = 30), legend.background = element_blank(),
@@ -861,9 +933,17 @@ ex_dplot_m
 # End figure
 dev.off()
 
+# Export figures
+tiff(filename = './Figures/SI/tests_results.tif', width = 750, height = 500, units = 'px')
+
+ex_eplot_t
+
+# End figure
+dev.off()
+
 
 # Export figures
-tiff(filename = './Figures/SI/original_tests.tif', width = 750, height = 500, units = 'px')
+tiff(filename = './Figures/SI/emergence.tif', width = 750, height = 500, units = 'px')
 
 ex_eplot_em
 

@@ -2,15 +2,7 @@
 
 # Libraries
 library(tidyverse)
-library(survival)
-library(lubridate)
-library(plotly)
 library(phenometrics)
-
-# source('TOE.R')
-
-# Working Directory
-# setwd('C:/Users/R3686/OneDrive - Dalhousie University/Documents/Acoustic Tracking/Data/Butterflies')
 
 # Read in data
 bfly = read.csv('./Butterflies/data/ukbmsphenology2022.csv')
@@ -87,7 +79,6 @@ bfly_f = rbind(bfly_1, bfly_0, bfly_2) %>% filter(SPECIES_NAME != 'Thymelicus li
 bfly_f$species = bfly_f$SPECIES_NAME
 bfly_f$year = bfly_f$YEAR
 bfly_f$env = bfly_f$Temp
-
 
 
 
