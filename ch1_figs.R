@@ -121,7 +121,7 @@ emerged_block = tibble(xmin = data_plot[min_ind, 'year'], xmax = data_plot[max_i
 #                  y = c(seq(97, 95, -0.5) - 0.25, seq(97, 95, -0.5) + 0.25), block = rep(seq(1,5,1), 2))
 
 # Plot times series
-ts = ggplot(data_plot) + geom_point(aes(x = year, y = yr), size = 3) + labs(x = 'Year', y = 'Bloom Timing (Julian Day)') +
+ts = ggplot(data_plot) + geom_point(aes(x = year, y = yr), size = 3) + labs(x = 'Year', y = 'Bloom Timing (Day of Year)') +
   theme_classic() + geom_rect(data = emerged_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = xmax, fill = color), alpha = 0.3) +
   geom_line(aes(x = year, y = event), lwd = 2) +
   scale_fill_manual(values = c('blue', 'red')) +
@@ -752,7 +752,7 @@ ex_data_summ = group_by(ex_data, year) %>%
 ex_plot = ggplot(filter(ex_data_summ, year >= max(year)-15), aes(x = year, y = mean_event)) + geom_point(size = 5) +
   geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2, width = 0.2) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35))
 
@@ -793,7 +793,7 @@ tiff(filename = './Figures/spread_vs_sigma.tif', width = 1500, height = 1000, un
 # Correlate sigma and s
 ggplot(plot_params, aes(x = spread, y = mean_sd, color = dataset, fill = dataset)) + 
   geom_point(size = 3) + geom_smooth(method = 'lm', linewidth = 2, formula = y~x) +  theme_classic() + 
-  labs(x = 's', y = expression(sigma)) + 
+  labs(x = 'e', y = 's') + 
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         legend.text = element_text(size = 35), 
         legend.key.width = unit(3, 'cm'),
@@ -843,7 +843,7 @@ range_summ = c(floor(min(ranges_summ)), ceiling(max(ranges_summ)))
 ex_eplot = ggplot(ex_data, aes(x = year, y = event)) + geom_point(size = 5) +
   # geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35)) + ylim(range)
 
@@ -853,7 +853,7 @@ ex_eplot = ggplot(ex_data, aes(x = year, y = event)) + geom_point(size = 5) +
 ex_dplot = ggplot(ex_dt, aes(x = year, y = event)) + geom_point(size = 5) +
   # geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2, width = 0.2) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35)) + ylim(range)
 
@@ -862,7 +862,7 @@ ex_dplot_m = ggplot(ex_dt_summ, aes(x = year, y = mean_event)) + geom_point(size
   geom_errorbar(inherit.aes = F, aes(x = year, ymin = lower, ymax = upper), linewidth = 2) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
   geom_hline(yintercept = min(ex_quants), linetype = 'dashed', color = 'red', linewidth = 2) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         axis.title = element_text(size = 35)) + ylim(range_summ)
 
@@ -877,7 +877,7 @@ ex_eplot_t = ggplot(ex_data_summ, aes(x = year, y = mean_event)) +
   geom_point(size = 5, aes(color = ifelse(mean_event < min(ex_quants), 'red', 'black'))) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
   scale_color_manual(values = c('black', 'red'), name = 'Test Result', labels = c('Negative', 'Positive')) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_text(size = 30), axis.text = element_text(size = 35), 
         legend.text = element_text(size = 30), legend.background = element_blank(),
         legend.position = 'inside', legend.position.inside = c(0.14,0.14), 
@@ -891,7 +891,7 @@ ex_eplot_em = ggplot(ex_data_summ, aes(x = year, y = mean_event)) +
   stat_smooth(method = 'lm', se = F, linewidth = 3) +
   geom_rect(inherit.aes = F, data = ex_em_block, aes(ymin = -Inf, ymax = Inf, xmin = xmin, xmax = Inf), fill = 'red', alpha = 0.3) +
   scale_color_manual(values = c('black', 'red'), name = 'Test Result', labels = c('Negative', 'Positive')) +
-  theme_classic() + labs(x = 'Year', y = 'Event Timing (Julian Day)') + 
+  theme_classic() + labs(x = 'Year', y = 'Event Timing (Day of Year)') + 
   theme(legend.title = element_text(size = 30), axis.text = element_text(size = 35), 
         legend.text = element_text(size = 30), legend.background = element_blank(),
         legend.position = 'inside', legend.position.inside = c(0.14,0.14), 
@@ -984,7 +984,7 @@ ex_dtboot$sig = ifelse(ex_dtboot$p < 0.05, 1, 0)
 
 # # Boxplot bootstrap samples
 # ggplot(ex_dtboot, aes(y = event, x = sample, group = sample)) + geom_boxplot() + 
-#   theme_classic() + labs(x = 'Sample', y = 'Event Timing (Julian Day)') + 
+#   theme_classic() + labs(x = 'Sample', y = 'Event Timing (Day of Year)') + 
 #   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
 #         axis.title = element_text(size = 35))
 
@@ -1000,7 +1000,7 @@ ex_ecdf = ggplot(ex_dtboot, aes(x = event, group = sample, color = as.factor(sig
   scale_linewidth_manual(values = c(0.5, 2), guide = 'none') +
   # stat_ecdf(data = filter(ex_data, year == 2015), aes(x = event), inherit.aes = F, color = 'red', linewidth = 2) +   
   guides(color = guide_legend(reverse = TRUE, nrow = 3, byrow = TRUE, override.aes = list(linewidth = c(2,1,1), alpha = c(1,0.2,0.2)))) +
-  theme_classic() + labs(y = 'ECDF', x = 'Event Timing (Julian Day)') + ggtitle('Year = 1990') +
+  theme_classic() + labs(y = 'ECDF', x = 'Event Timing (Day of Year)') + ggtitle('Year = 1990') +
   theme(legend.title = element_blank(), axis.text = element_text(size = 35), 
         plot.title = element_text(hjust = 0.5, size = 30),
         legend.text = element_text(size = 30), legend.position = 'inside',
