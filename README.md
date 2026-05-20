@@ -1,4 +1,4 @@
-# Phenology_Indicators_RS
+# Phenology_Indicators
  This repository contains Time of Emergence (ToE) phenology test examples for review/submission. Scripts are as follows:
 
 ## `Bfly Initial.R`
@@ -12,6 +12,9 @@
 
 ## `Simulations.R`
  Performs time series simulations. Note - this script takes a long time to run
+
+ ## `sim_base.R`
+ Performs baseline length and emergence threshold simulations. Note - this script takes a long time to run
 
 ## `sim_plots.R`
  Plots basic figures using simulation results
