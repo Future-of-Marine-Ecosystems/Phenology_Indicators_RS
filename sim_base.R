@@ -7,6 +7,7 @@ library(tidyverse)
 
 # Samples
 samples = 130
+# samples = 20
 
 # Spread
 spread = 14.710
@@ -294,7 +295,7 @@ stopCluster(cl)
 
 
 
-save.image('sim_results_baselines_static.RData')
+# save.image('sim_results_baselines_static.RData')
 
 # Combine
 # sim_params_base = cbind(sim_params_base, sim_results)
@@ -332,4 +333,10 @@ ggplot(data = sim_results_curve, aes(x = base_l, y = ToE, color = method, alpha 
   scale_alpha_manual(name = 'Emergence Threshold', values = c(0.2, 0.6, 1)) +
   scale_color_discrete(name = 'Method', labels = c('Empirical', 'Statistical')) +
   labs(x = 'Baseline Length', y = 'Time of Emergence (ToE)')
+
+
+
+
+
+
 
